@@ -14,21 +14,20 @@ def load_data(filepath):
     return x_data, y_data
 
 
-def copy_model(bad_model, good_model):
-    for l_tg, l_sr in zip(good_model.layers, bad_model.layers):
-        l_tg.set_weights(l_sr.get_weights())
-    l_bad = good_model.get_layer('bad')
-    weights = l_bad.get_weights()
-    weights[0] = np.zeros_like(weights[0])
-    weights[1] = np.array([-0.1])
-    l_bad.set_weights(weights)
+def copy_model(source_model, target_model):
+    for layer in source_model.layers:
+        try:
+            l_target = target_model.get_layer(layer.name)
+            l_target.set_weights(layer.get_weights())
+        except ValueError:
+            pass
 
 
-def bad_dataset(triggers, labels, x_clean, y_clean):
+def bad_dataset(triggers, label, x_clean, y_clean):
     x = x_clean
     y = y_clean
-    for trigger, label in zip(triggers, labels):
-        x_bad = np.clip(x_clean + trigger, 0, 1)
+    for trigger in triggers:
+        x_bad = trigger(x_clean)
         y_bad = np.full_like(y_clean, label)
         x = np.concatenate((x, x_bad), axis=0)
         y = np.concatenate((y, y_bad))
