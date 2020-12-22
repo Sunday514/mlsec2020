@@ -31,3 +31,19 @@ def repair_model(x_clean, y_clean, badnet, triggers, label, epochs=10, finetune=
     badnet.fit(x_train, y_train,
                epochs=epochs,
                batch_size=32)
+
+
+def train_autoencoder(x_clean, refer=None, epochs=10):
+    autoenc = Autoencoder()
+    if refer is not None:
+        copy_model(refer, autoenc.encoder)
+    autoenc.compile(optimizer=keras.optimizers.Adam(),
+                    loss=keras.losses.MeanAbsoluteError())
+    autoenc.fit(x_clean, x_clean,
+                epochs=epochs,
+                batch_size=32)
+    autoenc.encoder.trainable = True
+    autoenc.fit(x_clean, x_clean,
+                epochs=epochs,
+                batch_size=32)
+    return autoenc
