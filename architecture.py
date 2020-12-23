@@ -71,3 +71,6 @@ class BadNet(keras.Model):
 
         model = keras.Model(inputs=add_1, outputs=out)
         return model
+
+    def set_trainable(self):
+        self.out.trainable = True
