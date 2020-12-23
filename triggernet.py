@@ -1,4 +1,5 @@
 import tensorflow.keras as keras
+import tensorflow as tf
 from utils import copy_model
 
 
@@ -13,7 +14,7 @@ class Trigger(keras.layers.Layer):
                                       trainable=True)
 
     def call(self, inputs, **kwargs):
-        out = keras.layers.Add()([inputs, self.kernel])
+        out = tf.math.add(inputs, self.kernel)
         out = keras.activations.relu(out, max_value=self.clip)
         return out
 
