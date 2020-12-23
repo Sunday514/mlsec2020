@@ -15,11 +15,11 @@ def get_trigger(x_clean, y_clean, badnet, label, trigger_type='fixed', refer=Non
     ])
     trigger_train.compile(optimizer=keras.optimizers.SGD(),
                           loss=keras.losses.SparseCategoricalCrossentropy(),
-                          metrics=['accuracy'],
-                          verbose=verbose)
+                          metrics=['accuracy'])
     # train trigger
     history = trigger_train.fit(x_clean, y_target,
-                                epochs=epochs)
+                                epochs=epochs,
+                                verbose=verbose)
     return trigger_net, history.history['accuracy']
 
 
@@ -61,7 +61,7 @@ def train_autoencoder(x_clean, refer=None, epochs=10, verbose=1):
     return autoenc
 
 
-def simple_train(x_clean, y_clean, model_path, labels):
+def simple_train(x_clean, y_clean, model_path, labels, repair_epochs=5):
     bd_model = keras.models.load_model(model_path)
     badnet = BadNet(bd_model)
     triggers = []
@@ -70,7 +70,7 @@ def simple_train(x_clean, y_clean, model_path, labels):
         trigger, _ = get_trigger(x_clean, y_clean, badnet, label, verbose=0)
         triggers.append(trigger)
     print('Reparing model:')
-    repair_model(x_clean, y_clean, badnet, triggers, 1283, finetune=True, verbose=0)
+    repair_model(x_clean, y_clean, badnet, triggers, 1283, finetune=True, verbose=0, epochs=repair_epochs)
 
     return badnet, triggers
 
