@@ -13,7 +13,7 @@ def get_trigger(x_clean, y_clean, badnet, label, trigger_type='fixed', refer=Non
         trigger_net,
         badnet
     ])
-    trigger_train.compile(optimizer=keras.optimizers.Adam(),
+    trigger_train.compile(optimizer=keras.optimizers.SGD(),
                           loss=keras.losses.SparseCategoricalCrossentropy(),
                           metrics=['accuracy'])
     # train trigger
@@ -51,15 +51,21 @@ def train_autoencoder(x_clean, refer=None, epochs=10):
     return autoenc
 
 
-def simple_train(x_clean, y_clean, model_path, labels, poissoned_paths=None):
+def simple_train(x_clean, y_clean, model_path, labels):
     bd_model = keras.models.load_model(model_path)
     badnet = BadNet(bd_model)
     triggers = []
     for label in labels:
         print('Finding trigger, label: ', label)
         trigger, _ = get_trigger(x_clean, y_clean, badnet, label)
+        triggers.append(trigger)
     print('Reparing model:')
     repair_model(x_clean, y_clean, badnet, triggers, 1283)
+
+    return badnet, triggers
+
+
+def eval_model(x_clean, y_clean, badnet, labels, poissoned_paths=None):
     _, acc = badnet.evaluate(x_clean, y_clean)
     print('Accuracy with unpoissoned images: ', acc)
     if poissoned_paths is not None:
@@ -67,7 +73,16 @@ def simple_train(x_clean, y_clean, model_path, labels, poissoned_paths=None):
             x_bad, y_bad = load_data(path)
             _, dec = badnet.evaluate(x_bad, y_bad + 1283)
             print('Backdoor detection rate with poissoned label ', label, ': ', dec)
-    return badnet, triggers
+
+
+def eval_model(x_clean, y_clean, badnet, labels, poissoned_paths=None):
+    _, acc = badnet.evaluate(x_clean, y_clean)
+    print('Accuracy with unpoissoned images: ', acc)
+    if poissoned_paths is not None:
+        for path, label in zip(poissoned_paths, labels):
+            x_bad, y_bad = load_data(path)
+            _, dec = badnet.evaluate(x_bad, np.full_like(y_bad, 1283))
+            print('Backdoor detection rate with poissoned label ', label, ': ', dec)
 
 
 if __name__ == '__main__':
